@@ -1,0 +1,144 @@
+{
+  "schema": "pogoskill-korean-portable-v1",
+  "scope": {
+    "product": "PoGoskill",
+    "source_site": "tw.pogoskill.com",
+    "site": "kr.pogoskill.com",
+    "language": "ko-KR",
+    "delivery": "local DOCX, SEO, media and evidence only"
+  },
+  "entry": "knowledge/article-pipeline.md",
+  "default_mode": "independent_stage_agents",
+  "coordinator": {
+    "role": "dispatch_only",
+    "reads": [
+      "本次用户要求",
+      "knowledge/policy.json",
+      "当前task.json或短交接"
+    ],
+    "does_not_preload": [
+      "整套旧skill",
+      "v1-v7原文",
+      "全量文章/API/审核响应",
+      "旧篇历史",
+      "全部阶段规范"
+    ],
+    "review_revision_override": "2026-11-03 user: coordinator applies review corrections to manuscript/Word/attachments and immediately returns to same independent reviewer; all stage roles and review gates retained"
+  },
+  "stages": {
+    "source": {
+      "skill": "pogoskill-kr-source",
+      "rules": "knowledge/stages/source.md",
+      "requires": [],
+      "purpose": "轻量候选和韩语含草稿查重；搜索定题后同员补齐选中篇完整源文/结构，不预处理落选篇"
+    },
+    "ga4": {
+      "skill": "pogoskill-kr-ga4",
+      "rules": "knowledge/stages/ga4.md",
+      "requires": [
+        "source"
+      ],
+      "purpose": "真实GA4浏览基数与7/前7/28天趋势；其他指标按需展开"
+    },
+    "search": {
+      "skill": "pogoskill-kr-search",
+      "rules": "knowledge/stages/search.md",
+      "requires": [
+        "source",
+        "ga4"
+      ],
+      "purpose": "Semrush优先核韩国需求；不可用、配额耗尽或数据不足才回退Keyword Planner并定题"
+    },
+    "translate": {
+      "skill": "pogoskill-kr-translate",
+      "rules": "knowledge/stages/translate.md",
+      "requires": [
+        "source",
+        "search"
+      ],
+      "purpose": "繁中转自然韩语，事实核实、主图正文图Guide、Word及SEO"
+    },
+    "review": {
+      "skill": "pogoskill-kr-review",
+      "rules": "knowledge/stages/review.md",
+      "requires": [
+        "source",
+        "translate"
+      ],
+      "purpose": "完整初审、译者回应及至少第二轮复审，绑定最终稿散列"
+    },
+    "operations": {
+      "skill": "pogoskill-kr-operations",
+      "rules": "knowledge/stages/operations.md",
+      "requires": [],
+      "purpose": "单次改动的范围判断和定向修改/复核"
+    }
+  },
+  "article_order": [
+    "source",
+    "ga4",
+    "search",
+    "translate",
+    "review"
+  ],
+  "operations_direct_entry": true,
+  "context": {
+    "fork_turns": "none",
+    "inherit_model_and_reasoning": true,
+    "fresh_stage_agent": true,
+    "same_article_revision_reuses_own_stage_agent": true,
+    "new_article_new_agents": true,
+    "raw_history_auto_load": false,
+    "ideas_auto_load": false,
+    "full_source_required_for_translation_and_first_review": true,
+    "changed_artifact_invalidates_dependent_pass": true,
+    "handoff_fields": [
+      "goal",
+      "completed",
+      "decisions",
+      "artifacts",
+      "validation",
+      "unresolved",
+      "next_context"
+    ],
+    "stage_output_to_coordinator": [
+      "status",
+      "blocking_issues",
+      "artifact_paths_and_sha256",
+      "handoff_path"
+    ]
+  },
+  "rules": {
+    "authority": "knowledge/stages/*.md",
+    "originals": "按需追溯，不默认重读；各阶段保留全部适用业务门槛",
+    "maintenance": "用户新要求更新所属阶段，跨阶段只更新受影响文件，保留来源及原件"
+  },
+  "quality": {
+    "independent_review_rounds_minimum": 2,
+    "visual_checks_unchanged": true,
+    "no_model_or_agent_reduction": true
+  },
+  "authorization": {
+    "external_write": false,
+    "cms_workflow_included": false
+  },
+  "runtime_limit": "文件不会清除宿主已有历史。工作Agent用fork_turns=none隔离；主聊天保持短调度。不自动创建用户侧聊天，不宣称实测提速比例。",
+  "execution_scope": {
+    "source_candidate_handoff_immutable": true,
+    "selected_source_before_translation": true,
+    "selected_source_role": "source",
+    "selected_source_binding": "translate.validation.selected_source",
+    "search_primary_tool_count": 1,
+    "search_fallback_conditions": [
+      "semrush_unavailable",
+      "semrush_quota_exhausted",
+      "semrush_data_insufficient_for_core_keywords"
+    ],
+    "ga4_default_metric": "screenPageViews",
+    "ga4_additional_reports": "only_when_needed_or_requested",
+    "word_only_requires_html": false,
+    "web_resource_checks_at": "not_in_this_package",
+    "search_primary_tool": "Semrush",
+    "search_fallback_tool": "Keyword Planner"
+  }
+}

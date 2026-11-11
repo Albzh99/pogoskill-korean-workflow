@@ -1,0 +1,12 @@
+.local/
+.venv/
+__pycache__/
+*.pyc
+work/
+.env
+.env.*
+*.pem
+*.p12
+client_secret*.json
+credentials*.json
+token*.json
